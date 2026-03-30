@@ -129,3 +129,60 @@ def get_graph_statistics(G: nx.Graph) -> dict:
     }
     
     return statistics
+
+
+def save_graph(G: nx.Graph, filename: str = "network_graph.gexf") -> None:
+    """
+    Export the network graph to a file format suitable for visualization tools.
+    
+    Parameters
+    ----------
+    G : nx.Graph
+        The network graph to export.
+    filename : str, optional
+        Output filename. Default is "network_graph.gexf".
+        Supported formats:
+        - .gexf: GEXF format (recommended for Gephi)
+        - .graphml: GraphML format (universal graph format)
+        - .gml: GML format (graph modelling language)
+        - .json: JSON format
+    
+    Returns
+    -------
+    None
+    
+    Raises
+    ------
+    ValueError
+        If the file format is not supported.
+    
+    Examples
+    --------
+    >>> save_graph(G, "network_graph.gexf")
+    >>> save_graph(G, "network_graph.graphml")
+    """
+    
+    # Validate filename
+    if not filename:
+        raise ValueError("Filename cannot be empty")
+    
+    # Determine format from extension
+    if filename.endswith('.gexf'):
+        nx.write_gexf(G, filename)
+    elif filename.endswith('.graphml'):
+        nx.write_graphml(G, filename)
+    elif filename.endswith('.gml'):
+        nx.write_gml(G, filename)
+    elif filename.endswith('.json'):
+        import json
+        # Convert to node-link format for JSON
+        data = nx.node_link_data(G)
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2, default=str)
+    else:
+        raise ValueError(
+            f"Unsupported format: {filename}. "
+            "Supported formats: .gexf, .graphml, .gml, .json"
+        )
+    
+    print(f"✓ Graph exported to {filename}")
