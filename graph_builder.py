@@ -75,3 +75,57 @@ def build_graph(df: pd.DataFrame) -> nx.Graph:
         G.add_edge(source_ip, dest_ip, **edge_attrs)
     
     return G
+
+
+def get_graph_statistics(G: nx.Graph) -> dict:
+    """
+    Calculate and return comprehensive statistics about the network graph.
+    
+    Parameters
+    ----------
+    G : nx.Graph
+        The network graph to analyze.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following statistics:
+        - 'num_nodes': int, total number of nodes (IP addresses)
+        - 'num_edges': int, total number of edges (connections)
+        - 'avg_degree': float, average degree of all nodes
+        - 'top_10_nodes': list of tuples, top 10 nodes by degree (IP, degree)
+        - 'num_connected_components': int, number of connected components
+    
+    Examples
+    --------
+    >>> stats = get_graph_statistics(G)
+    >>> print(f"Nodes: {stats['num_nodes']}")
+    >>> print(f"Top nodes: {stats['top_10_nodes']}")
+    """
+    
+    num_nodes = G.number_of_nodes()
+    num_edges = G.number_of_edges()
+    
+    # Calculate average degree
+    if num_nodes > 0:
+        avg_degree = 2 * num_edges / num_nodes
+    else:
+        avg_degree = 0.0
+    
+    # Get top 10 nodes by degree
+    degree_sequence = sorted(G.degree(), key=lambda x: x[1], reverse=True)
+    top_10_nodes = degree_sequence[:10]
+    
+    # Count connected components
+    num_connected_components = nx.number_connected_components(G)
+    
+    # Compile statistics
+    statistics = {
+        'num_nodes': num_nodes,
+        'num_edges': num_edges,
+        'avg_degree': avg_degree,
+        'top_10_nodes': top_10_nodes,
+        'num_connected_components': num_connected_components
+    }
+    
+    return statistics
