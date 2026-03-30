@@ -1,0 +1,77 @@
+"""
+Graph Construction Module for Dynamic Network Intrusion Detection Graph Analyzer (DINDGA)
+
+This module provides functionality to build network graphs from network traffic data.
+"""
+
+import networkx as nx
+import pandas as pd
+
+
+def build_graph(df: pd.DataFrame) -> nx.Graph:
+    """
+    Build an undirected network graph from network traffic data.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing network traffic data with the following columns:
+        - Timestamp: datetime of the traffic event
+        - Duration: float value representing connection duration
+        - Protocol: string (TCP, UDP, etc.)
+        - SourceIP: string IP address of source
+        - DestinationIP: string IP address of destination
+        - SourcePort: integer port number
+        - DestinationPort: integer port number
+        - PacketCount: integer number of packets
+        - BytesSent: integer bytes sent
+        - BytesReceived: integer bytes received
+        - Label: string (Normal, Attack, or specific attack type)
+    
+    Returns
+    -------
+    nx.Graph
+        An undirected NetworkX graph where:
+        - Nodes: unique IP addresses (from SourceIP and DestinationIP)
+        - Edges: one edge per row between SourceIP and DestinationIP
+        - Edge attributes: duration, packet_count, byte_count, protocol,
+                          source_port, destination_port, label, timestamp
+    
+    Examples
+    --------
+    >>> df = pd.read_csv('dindga_fixed_data_with_time.csv')
+    >>> G = build_graph(df)
+    >>> print(f"Nodes: {G.number_of_nodes()}, Edges: {G.number_of_edges()}")
+    """
+    
+    # Create an empty undirected graph
+    G = nx.Graph()
+    
+    # Add nodes: all unique IP addresses
+    all_ips = pd.concat([df['SourceIP'], df['DestinationIP']]).unique()
+    G.add_nodes_from(all_ips)
+    
+    # Add edges with attributes from each row
+    for _, row in df.iterrows():
+        source_ip = row['SourceIP']
+        dest_ip = row['DestinationIP']
+        
+        # Calculate total byte count
+        byte_count = row['BytesSent'] + row['BytesReceived']
+        
+        # Edge attributes
+        edge_attrs = {
+            'duration': row['Duration'],
+            'packet_count': row['PacketCount'],
+            'byte_count': byte_count,
+            'protocol': row['Protocol'],
+            'source_port': row['SourcePort'],
+            'destination_port': row['DestinationPort'],
+            'label': row['Label'],
+            'timestamp': row['Timestamp']
+        }
+        
+        # Add edge (undirected, so order doesn't matter)
+        G.add_edge(source_ip, dest_ip, **edge_attrs)
+    
+    return G
