@@ -55,8 +55,3 @@ Returns dict with: num_nodes, num_edges, avg_degree, top_10_nodes, num_connected
 
 ### `save_graph(G, filename)`
 Exports graph to file (.gexf, .graphml, .gml, or .json)
-
-## Notes
-- No self-loops (same source & destination IPs are skipped)
-- Undirected graph (connections work both ways)
-- Efficient for datasets under 5000 rows
