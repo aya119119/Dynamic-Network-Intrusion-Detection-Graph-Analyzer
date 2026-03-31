@@ -1,4 +1,4 @@
-# DINDGA Phase 2 - Graph Construction
+# DINDGA Phase 2 - Graph Construction - DONE
 
 ## Overview
 Phase 2 builds a network graph from network traffic data. Nodes are IP addresses, edges are connections between them with traffic attributes.
@@ -15,43 +15,61 @@ git pull
 python graph_builder.py
 ```
 
-**What it does:**
-- Loads `network_traffic_data.csv`
-- Builds an undirected NetworkX graph (255 nodes, ~1900 edges)
-- Prints graph statistics (nodes, edges, average degree, top 10 IPs, connected components)
-- Shows a sample edge with all its attributes (duration, packet count, bytes, protocol, ports, label, timestamp)
-- Exports the graph to `network_graph.gexf` for visualization in tools like Gephi
 
-### 3. Run the Test Script
-```bash
-python test_graph.py
-```
 
-**What it does:**
-- Same as above but cleaner - imports the module functions and uses them
-- Good for testing that the module works correctly
-- You can modify this to test different functions or datasets
 
-## Generated Files
+Phase 1 Completion (Data Foundation) – Finish These First
+Finalize the Data Parser
+Create data_parser.py with a function that loads your fixed CSV, adds basic cleaning, and creates useful derived features (PacketsPerSecond, BytesPerSecond, AvgPacketSize).
+Test it and make sure it prints the number of rows, time span, and Label distribution.
+Document Your Dataset (for report)
+Write a short paragraph:  Size of dataset (number of rows)  
+Time period (from first to last timestamp)  
+Number of Normal vs Attack records  
+Note that Timestamp was added for dynamic analysis
 
-When you run either script, these files are created:
+Phase 2: Graph Construction (Next Major Step)
+Create Graph Builder Module
+Build a function that takes the DataFrame and creates a NetworkX graph:  Nodes = unique IPs (SourceIP + DestinationIP)  
+Edges = every connection with attributes (Duration, PacketCount, ByteCount, Protocol, DestinationPort, Label, Timestamp)
 
-- **`network_graph.gexf`** - Graph in GEXF format (use with Gephi for visualization)
-  - Contains all nodes (IPs) and edges with their attributes
-  - Best for network visualization
+Add Basic Graph Statistics
+Calculate and print:  Total nodes and edges  
+Top 10 IPs with highest degree (most connections)  
+Average degree
 
-Optional other formats (if you call `save_graph()` with different filenames):
-- **`network_graph.graphml`** - GraphML format (universal graph format)
-- **`network_graph.gml`** - GML format (lighter file size)
-- **`network_graph.json`** - JSON node-link format (for web/custom tools)
+Test Graph Visualization
+Create a small interactive graph visualization using Pyvis or Plotly (start with max 100–200 edges so it doesn't lag).
+Save or display the graph image/HTML.
 
-## Module Functions
+Phase 3: Core Analysis & ML Detection
+Implement Graph Algorithms  Degree Centrality  
+Betweenness Centrality (optional at first)  
+Community Detection (Louvain if possible)  
+Find highly connected nodes or unusual communities
 
-### `build_graph(df)`
-Takes a DataFrame, creates nodes from unique IPs, adds edges per row, skips self-loops.
+Feature Engineering for ML
+Create features such as:  Per-IP statistics (total bytes, total packets, unique ports contacted, average degree)  
+Time-window based features (connections per 5-min window)  
+Anomaly-friendly features (PacketsPerSecond, BytesPerSecond, etc.)
 
-### `get_graph_statistics(G)`
-Returns dict with: num_nodes, num_edges, avg_degree, top_10_nodes, num_connected_components
+Build Anomaly Detection Model  Use Isolation Forest or Local Outlier Factor (LOF) on the features  
+Train on "Normal" connections or use unsupervised mode  
+Generate anomaly scores for each connection or each IP
 
-### `save_graph(G, filename)`
-Exports graph to file (.gexf, .graphml, .gml, or .json)
+Phase 4: Intrusion Detection Engine
+Create Threat Scoring System
+Combine graph features + ML anomaly score into a single threat score per IP or per edge.
+Generate Alerts
+Flag top suspicious IPs and connections with reasoning (e.g., “High degree + high PacketCount + many different ports = likely port scan”).
+
+Phase 5: Streamlit Dashboard (UI)
+Set Up Streamlit App
+Create app.py with pages/tabs: Data Overview, Graph View, Analysis, Detection Results, Alerts.
+Add Interactive Features  Upload your fixed CSV (or load default)  
+Interactive graph visualization  
+Filters by Label or threat score  
+Timeline slider for dynamic view
+
+Export Functionality
+Allow exporting detected threats as CSV or simple report.
