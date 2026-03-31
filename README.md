@@ -18,7 +18,7 @@ python graph_builder.py
 
 
 
-Phase 1 Completion (Data Foundation) – Finish These First
+## Phase 1 Completion (Data Foundation) – Finish These First
 Finalize the Data Parser
 Create data_parser.py with a function that loads your fixed CSV, adds basic cleaning, and creates useful derived features (PacketsPerSecond, BytesPerSecond, AvgPacketSize).
 Test it and make sure it prints the number of rows, time span, and Label distribution.
@@ -28,7 +28,7 @@ Time period (from first to last timestamp)
 Number of Normal vs Attack records  
 Note that Timestamp was added for dynamic analysis
 
-Phase 2: Graph Construction (Next Major Step)
+## Phase 2: Graph Construction (Next Major Step)
 Create Graph Builder Module
 Build a function that takes the DataFrame and creates a NetworkX graph:  Nodes = unique IPs (SourceIP + DestinationIP)  
 Edges = every connection with attributes (Duration, PacketCount, ByteCount, Protocol, DestinationPort, Label, Timestamp)
@@ -42,7 +42,7 @@ Test Graph Visualization
 Create a small interactive graph visualization using Pyvis or Plotly (start with max 100–200 edges so it doesn't lag).
 Save or display the graph image/HTML.
 
-Phase 3: Core Analysis & ML Detection
+## Phase 3: Core Analysis & ML Detection
 Implement Graph Algorithms  Degree Centrality  
 Betweenness Centrality (optional at first)  
 Community Detection (Louvain if possible)  
@@ -57,14 +57,13 @@ Build Anomaly Detection Model  Use Isolation Forest or Local Outlier Factor (LOF
 Train on "Normal" connections or use unsupervised mode  
 Generate anomaly scores for each connection or each IP
 
-Phase 4: Intrusion Detection Engine
+## Phase 4: Intrusion Detection Engine
 Create Threat Scoring System
 Combine graph features + ML anomaly score into a single threat score per IP or per edge.
 Generate Alerts
 Flag top suspicious IPs and connections with reasoning (e.g., “High degree + high PacketCount + many different ports = likely port scan”).
 
-Phase 5: Streamlit Dashboard (UI)
-Set Up Streamlit App
+## Phase 5: Dashboard (UI)
 Create app.py with pages/tabs: Data Overview, Graph View, Analysis, Detection Results, Alerts.
 Add Interactive Features  Upload your fixed CSV (or load default)  
 Interactive graph visualization  
