@@ -176,4 +176,90 @@ def detect_anomalies(node_features_df: pd.DataFrame,
           f"({n_anomalies / len(result_df) * 100:.1f}%)")
  
     return result_df
+
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. TIME-WINDOW SPIKE DETECTION
+# ─────────────────────────────────────────────────────────────────────────────
+ 
+def analyze_time_windows(df: pd.DataFrame,
+                         window_minutes: int = 10) -> pd.DataFrame:
+    """
+    Divide the traffic into fixed time windows and track per-IP connection counts.
+    A 'spike' is flagged when an IP's degree in a window exceeds
+    (mean + 2 × std) across all windows for that IP.
+ 
+    Parameters
+    ----------
+    df             : pd.DataFrame  – raw traffic data with a 'Timestamp' column
+    window_minutes : int           – width of each time slice in minutes
+ 
+    Returns
+    -------
+    pd.DataFrame with columns:
+        ip, window_start, window_degree, mean_degree, std_degree, is_spike
+    """
+ 
+    # ── Parse timestamps ──────────────────────────────────────────────────────
+    df = df.copy()
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+ 
+    # ── Define window boundaries ──────────────────────────────────────────────
+    t_start = df['Timestamp'].min()
+    t_end   = df['Timestamp'].max()
+    freq    = f"{window_minutes}min"
+ 
+    # pd.date_range creates evenly-spaced cut points
+    bins = pd.date_range(start=t_start, end=t_end + pd.Timedelta(minutes=window_minutes),
+                         freq=freq)
+ 
+    # Assign each row to a bin (window)
+    df['window'] = pd.cut(df['Timestamp'], bins=bins, labels=bins[:-1], right=False)
+    df['window'] = df['window'].astype(str)   # make it hashable for groupby
+ 
+    spike_records = []
+ 
+    # Iterate over every time window that has at least one row
+    for window_start, window_df in df.groupby('window'):
+        # Build a mini graph for this window only
+        G_window = nx.Graph()
+        for _, row in window_df.iterrows():
+            src, dst = row['SourceIP'], row['DestinationIP']
+            if src != dst:
+                G_window.add_edge(src, dst)
+ 
+        # Record the degree of each IP in this window
+        for ip, deg in G_window.degree():
+            spike_records.append({
+                'ip'           : ip,
+                'window_start' : window_start,
+                'window_degree': deg,
+            })
+ 
+    if not spike_records:
+        print("[analyze_time_windows] No data to analyse.")
+        return pd.DataFrame()
+ 
+    spike_df = pd.DataFrame(spike_records)
+ 
+    # ── Compute per-IP statistics across all windows ──────────────────────────
+    ip_stats = (spike_df
+                .groupby('ip')['window_degree']
+                .agg(mean_degree='mean', std_degree='std')
+                .fillna(0)
+                .reset_index())
+ 
+    spike_df = spike_df.merge(ip_stats, on='ip', how='left')
+ 
+    # Flag a window as a spike if degree > mean + 2*std
+    threshold = spike_df['mean_degree'] + 2 * spike_df['std_degree']
+    spike_df['is_spike'] = spike_df['window_degree'] > threshold
+ 
+    n_spikes = spike_df['is_spike'].sum()
+    n_ips    = spike_df[spike_df['is_spike']]['ip'].nunique()
+    print(f"[analyze_time_windows] Detected {n_spikes} spike events across {n_ips} unique IPs")
+ 
+    return spike_df
  
