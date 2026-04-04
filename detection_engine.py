@@ -299,3 +299,146 @@ def _build_reason(row: pd.Series,
  
     return ", ".join(reasons) if reasons else "none"
  
+ 
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. MAIN DETECTION PIPELINE
+# ─────────────────────────────────────────────────────────────────────────────
+ 
+def run_detection(csv_path: str = "network_traffic_data.csv",
+                  output_path: str = "detection_results.csv",
+                  window_minutes: int = 10) -> pd.DataFrame:
+    """
+    End-to-end detection pipeline.
+ 
+    Steps
+    -----
+    1. Load CSV
+    2. Build graph (from graph_builder)
+    3. Extract per-IP node features
+    4. Run Isolation Forest anomaly detection
+    5. Analyse time-window spikes
+    6. Compute final threat score (weighted sum of normalised sub-scores)
+    7. Print top-10 suspicious IPs
+    8. Save results to CSV
+ 
+    Parameters
+    ----------
+    csv_path      : str  – path to the raw traffic CSV
+    output_path   : str  – where to write the results CSV
+    window_minutes: int  – time-window size for spike detection
+ 
+    Returns
+    -------
+    pd.DataFrame  – full results table (one row per IP, sorted by threat_score desc)
+    """
+ 
+    print("=" * 60)
+    print("  DINDGA – Phase 3 Detection Engine")
+    print("=" * 60)
+ 
+    # ── Step 1: Load data ─────────────────────────────────────────────────────
+    print(f"\n[1/5] Loading data from '{csv_path}' …")
+    df = pd.read_csv(csv_path)
+    # Ensure combined byte column exists
+    if 'ByteCount' not in df.columns:
+        df['ByteCount'] = df['BytesSent'] + df['BytesReceived']
+    print(f"      {len(df):,} rows loaded.")
+ 
+    # ── Step 2: Build graph ───────────────────────────────────────────────────
+    print("\n[2/5] Building network graph …")
+    G = build_graph(df)
+    stats = get_graph_statistics(G)
+    print(f"      {stats['num_nodes']} nodes, {stats['num_edges']} edges, "
+          f"{stats['num_connected_components']} component(s)")
+ 
+    # ── Step 3: Extract features ──────────────────────────────────────────────
+    print("\n[3/5] Extracting node features …")
+    features_df = extract_node_features(df, G)
+ 
+    # ── Step 4: Anomaly detection ─────────────────────────────────────────────
+    print("\n[4/5] Running Isolation Forest anomaly detection …")
+    anomaly_df = detect_anomalies(features_df)
+ 
+    # ── Step 5: Time-window spike analysis ────────────────────────────────────
+    print(f"\n[5/5] Analysing time windows ({window_minutes}-min buckets) …")
+    spike_df = analyze_time_windows(df, window_minutes=window_minutes)
+ 
+    # Collect IPs that had at least one spike window
+    spike_ips: set = set()
+    if not spike_df.empty:
+        spike_ips = set(spike_df[spike_df['is_spike']]['ip'].unique())
+ 
+    # ── Build combined threat score ───────────────────────────────────────────
+    # We normalise each sub-signal to [0, 1] and then take a weighted sum.
+ 
+    results = anomaly_df.copy()   # index = ip
+ 
+    # Sub-signal A: Isolation Forest score
+    #   anomaly_score is negative-is-bad; invert so higher = worse
+    inv_if_score = -results['anomaly_score']
+    scaler = MinMaxScaler()
+    results['if_score_norm'] = scaler.fit_transform(inv_if_score.values.reshape(-1, 1)).flatten()
+ 
+    # Sub-signal B: Connection spike flag (binary)
+    results['spike_score'] = results.index.map(lambda ip: 1.0 if ip in spike_ips else 0.0)
+ 
+    # Sub-signal C: Degree (normalised)
+    results['degree_norm'] = scaler.fit_transform(
+        results['degree'].values.reshape(-1, 1)).flatten()
+ 
+    # Sub-signal D: Port diversity (normalised)
+    results['port_norm'] = scaler.fit_transform(
+        results['unique_dst_ports'].values.reshape(-1, 1)).flatten()
+ 
+    # Weighted final score  (weights should sum to 1 for interpretability)
+    W_IF     = 0.40   # Isolation Forest is the primary signal
+    W_SPIKE  = 0.25   # temporal spike is a strong behavioural indicator
+    W_DEGREE = 0.20   # high connectivity is suspicious
+    W_PORT   = 0.15   # port scan hint
+ 
+    results['threat_score'] = (
+        W_IF     * results['if_score_norm'] +
+        W_SPIKE  * results['spike_score']   +
+        W_DEGREE * results['degree_norm']   +
+        W_PORT   * results['port_norm']
+    )
+ 
+    # ── Add human-readable reasons ────────────────────────────────────────────
+    feature_cols   = ['degree', 'unique_dst_ports', 'bytes_per_second']
+    feature_medians = results[feature_cols].median()
+ 
+    results['reasons'] = results.apply(
+        lambda row: _build_reason(row, spike_ips, feature_medians), axis=1
+    )
+ 
+    # Sort descending by threat score
+    results.sort_values('threat_score', ascending=False, inplace=True)
+ 
+    # ── Print top 10 ──────────────────────────────────────────────────────────
+    print("\n" + "=" * 60)
+    print("  TOP 10 MOST SUSPICIOUS IPs")
+    print("=" * 60)
+ 
+    display_cols = ['threat_score', 'is_anomaly', 'degree',
+                    'unique_dst_ports', 'bytes_per_second', 'reasons']
+ 
+    top10 = results.head(10)[display_cols].copy()
+    top10['threat_score']    = top10['threat_score'].map('{:.4f}'.format)
+    top10['bytes_per_second']= top10['bytes_per_second'].map('{:,.0f}'.format)
+ 
+    print(top10.to_string())
+ 
+    # ── Save results ──────────────────────────────────────────────────────────
+    # Drop the intermediate normalised columns to keep the CSV clean
+    save_cols = ['degree', 'total_byte_count', 'total_packet_count',
+                 'unique_dst_ports', 'avg_duration', 'packets_per_second',
+                 'bytes_per_second', 'anomaly_score', 'is_anomaly',
+                 'threat_score', 'reasons']
+ 
+    results[save_cols].to_csv(output_path)
+    print(f"\n✓ Full results saved to '{output_path}'")
+    print("=" * 60)
+ 
+    return results
+ 
+ 
