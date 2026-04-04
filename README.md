@@ -1,9 +1,5 @@
-# DINDGA Phase 2 - Graph Construction
+#Phase 2 - Graph Construction
 
-## Overview
-Phase 2 builds a network graph from network traffic data. Nodes are IP addresses, edges are connections between them with traffic attributes.
-
-## Quick Start
 
 ### 1. Pull Latest Changes
 ```bash
