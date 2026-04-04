@@ -118,3 +118,62 @@ def extract_node_feature(df: pd.DataFrame, G: nx.Graph) -> pd.DataFrame:
     return features_df
 
 
+
+
+
+ 
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. ANOMALY DETECTION  (Isolation Forest)
+# ─────────────────────────────────────────────────────────────────────────────
+ 
+def detect_anomalies(node_features_df: pd.DataFrame,
+                     contamination: float = 0.1) -> pd.DataFrame:
+    """
+    Run Isolation Forest on the node feature table and mark anomalous IPs.
+ 
+    Isolation Forest works by randomly partitioning the feature space.
+    Points that are easy to isolate (short average path length) are anomalies.
+    contamination=0.1 means we expect ~10% of IPs to be anomalous.
+ 
+    Adds two columns to the returned DataFrame
+    ------------------------------------------
+    anomaly_score : float  – raw IF decision score; more negative = more anomalous
+    is_anomaly    : bool   – True if the IF classifies the IP as an outlier
+ 
+    Parameters
+    ----------
+    node_features_df : pd.DataFrame  (index = ip, columns = numeric features)
+    contamination    : float          fraction of expected anomalies (0 < x < 0.5)
+ 
+    Returns
+    -------
+    pd.DataFrame  – original df with two new columns appended
+    """
+ 
+    result_df = node_features_df.copy()
+ 
+    # Pull out the numeric feature matrix (all columns are already numeric)
+    X = result_df.values
+ 
+    # ── Train Isolation Forest ────────────────────────────────────────────────
+    # random_state=42 makes results reproducible
+    iso_forest = IsolationForest(
+        n_estimators=100,       # number of isolation trees
+        contamination=contamination,
+        random_state=42
+    )
+    iso_forest.fit(X)
+ 
+    # decision_function returns a score: negative = more anomalous
+    raw_scores = iso_forest.decision_function(X)    # shape (n_ips,)
+    predictions = iso_forest.predict(X)             # +1 = normal, -1 = anomaly
+ 
+    result_df['anomaly_score'] = raw_scores
+    result_df['is_anomaly']    = predictions == -1  # convert to True/False
+ 
+    n_anomalies = result_df['is_anomaly'].sum()
+    print(f"[detect_anomalies] Isolation Forest found {n_anomalies} anomalous IPs "
+          f"({n_anomalies / len(result_df) * 100:.1f}%)")
+ 
+    return result_df
+ 
