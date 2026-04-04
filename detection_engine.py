@@ -29,7 +29,7 @@ from graph_builder import build_graph, get_graph_statistics
 # 1. FEATURE EXTRACTION
 # ─────────────────────────────────────────────────────────────────────────────
 
-def extract_node_feature(df: pd.DataFrame, G: nx.Graph) -> pd.DataFrame:
+def extract_node_features(df: pd.DataFrame, G: nx.Graph) -> pd.DataFrame:
     """
     Build a feature table with one row per unique IP address.
 
