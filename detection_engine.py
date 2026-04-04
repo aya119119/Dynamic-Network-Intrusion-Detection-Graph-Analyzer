@@ -441,4 +441,9 @@ def run_detection(csv_path: str = "network_traffic_data.csv",
  
     return results
  
- 
+if __name__ == "__main__":
+    results = run_detection(
+        csv_path      = "network_traffic_data.csv",
+        output_path   = "detection_results.csv",
+        window_minutes= 10
+    )
