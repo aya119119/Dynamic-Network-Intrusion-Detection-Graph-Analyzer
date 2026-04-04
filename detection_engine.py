@@ -262,4 +262,40 @@ def analyze_time_windows(df: pd.DataFrame,
     print(f"[analyze_time_windows] Detected {n_spikes} spike events across {n_ips} unique IPs")
  
     return spike_df
+
+
+
+ 
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. HELPER – REASON TAGS
+# ─────────────────────────────────────────────────────────────────────────────
+ 
+def _build_reason(row: pd.Series,
+                  spike_ips: set,
+                  feature_medians: pd.Series) -> str:
+    """
+    Build a short human-readable reason string for why an IP is suspicious.
+    This is purely for display purposes.
+    """
+    reasons = []
+ 
+    if row.get('is_anomaly', False):
+        reasons.append("IF-anomaly")           # flagged by Isolation Forest
+ 
+    if row.name in spike_ips:
+        reasons.append("connection-spike")     # sudden degree spike in time window
+ 
+    # High-degree node (above median)
+    if row.get('degree', 0) > feature_medians.get('degree', 0):
+        reasons.append("high-degree")
+ 
+    # Unusually many distinct destination ports → possible port scan
+    if row.get('unique_dst_ports', 0) > feature_medians.get('unique_dst_ports', 0):
+        reasons.append("port-scan-hint")
+ 
+    # Very high byte throughput
+    if row.get('bytes_per_second', 0) > feature_medians.get('bytes_per_second', 0):
+        reasons.append("high-bandwidth")
+ 
+    return ", ".join(reasons) if reasons else "none"
  
