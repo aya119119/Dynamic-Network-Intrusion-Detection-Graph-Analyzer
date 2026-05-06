@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 import os
 
-input_file = r"c:\Users\elmes\OneDrive\Bureau\S6\Advanced Algorithms\Dynamic Network Intrusion Detection Graph Analyzer\network_traffic_data.csv"
+input_file = r"network_traffic_data.csv"
 output_file = input_file + ".tmp"
 
 with open(input_file, 'r', newline='') as f_in, open(output_file, 'w', newline='') as f_out:
