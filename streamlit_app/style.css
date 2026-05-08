@@ -1,0 +1,103 @@
+/* DINDGA Premium UI - Glassmorphism & Dark Mode */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg-color: #0e1117;
+    --card-bg: rgba(23, 28, 41, 0.7);
+    --accent-blue: #00d4ff;
+    --accent-red: #ff4b4b;
+    --accent-orange: #ffa500;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stApp {
+    background: radial-gradient(circle at top right, #1b2735 0%, #090a0f 100%);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Glassmorphism Containers */
+div[data-testid="stVerticalBlock"] > div.stColumn {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: transform 0.3s ease;
+}
+
+div[data-testid="stVerticalBlock"] > div.stColumn:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-blue);
+}
+
+/* Metric Styling */
+div[data-testid="stMetric"] {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent-blue);
+}
+
+div[data-testid="stMetricValue"] {
+    color: var(--accent-blue) !important;
+    font-weight: 800 !important;
+}
+
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: rgba(13, 17, 23, 0.95);
+    border-right: 1px solid var(--border-color);
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(90deg, #00d4ff 0%, #0072ff 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stButton > button:hover {
+    box-shadow: 0 0 15px var(--accent-blue);
+    transform: scale(1.02);
+}
+
+/* Custom Alert Header */
+.threat-alert {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 5px solid var(--accent-red);
+    background: rgba(255, 75, 75, 0.1);
+}
+
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 10px;
+    background-color: transparent;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px 8px 0 0;
+    color: var(--text-secondary);
+    padding: 0 20px;
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: var(--card-bg) !important;
+    color: var(--accent-blue) !important;
+    border-bottom: 2px solid var(--accent-blue) !important;
+}
