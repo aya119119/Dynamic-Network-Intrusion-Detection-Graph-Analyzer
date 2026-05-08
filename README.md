@@ -2,6 +2,36 @@
 
 # DINDGA – Dynamic Network Intrusion Detection Graph Analyzer
 
+## Project Structure
+
+```
+.
+├── src/                          # Core Python modules
+│   ├── detection_engine.py       # Phase 3: ML anomaly detection
+│   ├── graph_builder.py          # Phase 2: Graph construction
+│   ├── intrusion_detection_engine.py # Phase 4: Threat scoring engine
+│   └── process_csv.py            # Data processing utility
+├── data/                         # Input datasets
+│   └── network_traffic_data.csv
+├── tests/                        # Test suites
+│   ├── test_detection.py         # Detection engine tests
+│   ├── test_graph.py             # Graph builder tests
+│   └── test_intrusion_detection_engine.py
+├── output/                       # Generated results (git-ignored)
+│   ├── detection_results.csv
+│   ├── threat_alerts.csv
+│   └── network_graph.gexf
+├── streamlit_app/                # Streamlit web interface
+│   ├── app.py
+│   └── style.css
+├── venv/                         # Virtual environment
+├── README.md
+└── .gitignore
+
+```
+
+---
+
 ## Project Setup
 
 ### 1. Installation
@@ -19,18 +49,6 @@ Install the required dependencies:
 ```bash
 pip install pandas networkx scikit-learn streamlit pyvis plotly
 ```
-
----
-
-### 2. Project Files
-
-Make sure you have the following files in your project folder:
-
-* `dindga_fixed_data_with_time.csv` (main dataset)
-* `graph_builder.py`
-* `detection_engine.py`
-* `intrusion_detection_engine.py`
-* `app.py` *(coming in Phase 5)*
 
 ---
 
@@ -55,7 +73,7 @@ The system analyzes the graph structure and detects potential attacks such as:
 
 ### Phase 1 – Data Foundation
 
-* Created and cleaned a fixed dataset (`dindga_fixed_data_with_time.csv`)
+* Created and cleaned a fixed dataset
 * Added **Timestamp** column for temporal (dynamic) analysis
 * Built a data parser with basic cleaning and feature engineering
 
@@ -63,7 +81,7 @@ The system analyzes the graph structure and detects potential attacks such as:
 
 ### Phase 2 – Graph Construction
 
-* Built `graph_builder.py` to convert connection data into a NetworkX graph
+* Built `src/graph_builder.py` to convert connection data into a NetworkX graph
 * Nodes represent IP addresses
 * Edges include attributes:
 
@@ -95,14 +113,13 @@ The system analyzes the graph structure and detects potential attacks such as:
 
 ### Phase 4 – Intrusion Detection Engine
 
-* Created `intrusion_detection_engine.py`
+* Created `src/intrusion_detection_engine.py`
 * Calculates final threat scores using:
-
   * Graph features
   * ML anomaly scores
 * Generates human-readable alerts with reasoning
 * Ranks suspicious IPs by danger level
-* Saves results to `threat_alerts.csv`
+* Saves results to `output/threat_alerts.csv`
 
 ---
 
@@ -111,19 +128,42 @@ The system analyzes the graph structure and detects potential attacks such as:
 Phases 1 to 4 are complete.
 The core detection logic (**graph analysis + machine learning + threat scoring**) is fully functional.
 
-**Phase 5 (Streamlit Web Interface)** is not yet implemented.
+**Phase 5 (Streamlit Web Interface)** is available in `streamlit_app/`.
 
 ---
 
-## Run the Detection Engine
+## Quick Start
+
+### Run Tests
 
 ```bash
-python intrusion_detection_engine.py
+./venv/bin/python tests/test_detection.py
+```
+
+### Run the Detection Engine
+
+```bash
+./venv/bin/python -c "from src.intrusion_detection_engine import run_intrusion_detection; run_intrusion_detection()"
+```
+
+Or directly:
+
+```bash
+cd src && ../venv/bin/python intrusion_detection_engine.py
 ```
 
 This will:
 
 * Display the top suspicious IPs
-* Generate the alerts file (`threat_alerts.csv`)
+* Generate the alerts file in `output/threat_alerts.csv`
+
+### Run the Streamlit Web App
+
+```bash
+cd streamlit_app
+../../venv/bin/streamlit run app.py
+```
+
+The app will be available at `http://localhost:8501`
 
 ---
