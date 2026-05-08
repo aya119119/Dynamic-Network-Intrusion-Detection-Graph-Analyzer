@@ -12,11 +12,14 @@ venv/
 ENV/
 env/
 
-# Output and generated files
+# Output and generated files (but keep data/ files)
 output/
-*.csv
-*.gexf
-*.json
+output/*.csv
+output/*.gexf
+output/*.json
+# Allow data files, exclude others
+!data/
+!data/*.csv
 
 # IDE
 .vscode/
