@@ -16,9 +16,12 @@ app_dir = Path(__file__).parent  # streamlit_app folder
 project_root = app_dir.parent     # project root
 sys.path.insert(0, str(project_root))
 
-# Define data and output paths as absolute paths
+# Define data and output paths
 DATA_PATH = project_root / "data" / "network_traffic_data.csv"
 OUTPUT_PATH = project_root / "output" / "threat_alerts.csv"
+
+# Create output directory if it doesn't exist
+OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 from src.graph_builder import build_graph, get_graph_statistics
 from src.intrusion_detection_engine import run_intrusion_detection
@@ -63,18 +66,24 @@ def load_and_process_data():
     output_path = str(OUTPUT_PATH)
     
     if not os.path.exists(csv_path):
+        st.error(f"❌ Data file not found at: {csv_path}")
+        st.info("📂 Expected location: `data/network_traffic_data.csv` in the repository root")
         return None, None, None, None
     
-    # Run the full intrusion detection pipeline to get all data
-    final_df, alerts_df = run_intrusion_detection(csv_path=csv_path, output_path=output_path)
-    
-    # Load raw data for overview
-    raw_df = pd.read_csv(csv_path)
-    
-    # Build graph for visualization
-    G = build_graph(raw_df)
-    
-    return raw_df, G, final_df, alerts_df
+    try:
+        # Run the full intrusion detection pipeline to get all data
+        final_df, alerts_df = run_intrusion_detection(csv_path=csv_path, output_path=output_path)
+        
+        # Load raw data for overview
+        raw_df = pd.read_csv(csv_path)
+        
+        # Build graph for visualization
+        G = build_graph(raw_df)
+        
+        return raw_df, G, final_df, alerts_df
+    except Exception as e:
+        st.error(f"⚠️ Error processing data: {str(e)}")
+        return None, None, None, None
 
 with st.spinner("Initializing DINDGA Intelligence Engine..."):
     raw_df, G, final_df, alerts_df = load_and_process_data()
