@@ -1,0 +1,15 @@
+Category,Metric,Value
+Network Data,Total Records,2000.0
+Network Data,Protocols,3.0
+Network Data,Unique Source IPs,255.0
+Network Data,Unique Destination IPs,255.0
+Detection Results,Total IPs Analyzed,255.0
+Detection Results,Average Degree,15.270588235294118
+Detection Results,Average Anomaly Score,0.06409492571553442
+Detection Results,High Threat IPs,6.0
+Detection Results,Medium Threat IPs,96.0
+Detection Results,Low Threat IPs,153.0
+Threat Alerts,Total Alerts,18.0
+Threat Alerts,High Alerts,7.0
+Threat Alerts,Medium Alerts,11.0
+Threat Alerts,Low Alerts,0.0
